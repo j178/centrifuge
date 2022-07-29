@@ -37,15 +37,15 @@ const (
 )
 
 type RedisShard struct {
-	config    RedisShardConfig
-	client    redis.UniversalClient
-	subCh     chan subRequest
+	config           RedisShardConfig
+	client           redis.UniversalClient
+	subCh            chan subRequest
 	pubCh            chan pubRequest
 	dataCh           chan *dataRequest
 	useCluster       bool
-	scriptsMu sync.RWMutex
-	scripts   []*redis.Script
-	scriptsCh chan struct{}
+	scriptsMu        sync.RWMutex
+	scripts          []*redis.Script
+	scriptsCh        chan struct{}
 	reloadPipelineCh chan struct{}
 }
 
