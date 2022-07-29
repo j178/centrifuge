@@ -211,7 +211,7 @@ type dataRequest struct {
 	clusterKey string
 }
 
-func (s *RedisShard) newDataRequest(script *redis.Script, clusterKey channelID, keys []string, args []any) *dataRequest {
+func (s *RedisShard) newDataRequest(script *redis.Script, clusterKey channelID, keys []string, args []interface{}) *dataRequest {
 	dr := &dataRequest{script: script, keys: keys, args: args, resp: make(chan *dataResponse, 1)}
 	if s.useCluster {
 		dr.setClusterKey(string(clusterKey))
@@ -357,7 +357,10 @@ func (s *RedisShard) runDataPipeline() error {
 				},
 			)
 			if err != nil {
-				return err
+				for i := range drs {
+					drs[i].done(nil, err)
+				}
+				return fmt.Errorf("error flushing data pipeline: %w", err)
 			}
 
 			var noScriptError bool
