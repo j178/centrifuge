@@ -849,10 +849,10 @@ func (b *RedisBroker) runControlPubSub(s *RedisShard, eventHandler BrokerEventHa
 	}
 
 	pubsub := s.client.Subscribe(context.Background())
-	defer func() { _ = pubsub.Close() }()
 	err := pubsub.Subscribe(context.Background(), controlChannel, nodeChannel, pingChannel)
 	if err != nil {
 		b.node.Log(NewLogEntry(LogLevelError, "control channel subscribe error", map[string]interface{}{"error": err.Error()}))
+		_ = pubsub.Close()
 		return
 	}
 
@@ -860,6 +860,7 @@ func (b *RedisBroker) runControlPubSub(s *RedisShard, eventHandler BrokerEventHa
 		m, err := pubsub.ReceiveTimeout(context.Background(), 10*time.Second)
 		if err != nil {
 			b.node.Log(NewLogEntry(LogLevelError, "Redis receiver error", map[string]interface{}{"error": err}))
+			_ = pubsub.Close()
 			return
 		}
 		switch m := m.(type) {
