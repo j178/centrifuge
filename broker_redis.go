@@ -317,7 +317,7 @@ func (b *RedisBroker) checkCapabilities(shard *RedisShard) error {
 		return nil
 	}
 	// Check whether Redis Streams supported.
-	dr := shard.newDataRequest("XRANGE", nil, "", nil, []interface{}{"_", "0-0", "0-0"})
+	dr := shard.newDataRequest(nil, "", nil, []any{"XRANGE", "_", "0-0", "0-0"})
 	resp := shard.getDataResponse(dr)
 	if resp.err != nil {
 		if strings.Contains(resp.err.Error(), "ERR unknown command") {
@@ -400,12 +400,12 @@ func (b *RedisBroker) publish(s *RedisShard, ch string, data []byte, opts Publis
 		size = opts.HistorySize - 1
 		script = b.addHistoryListScript
 	}
-	dr := s.newDataRequest("", script, streamKey, []string{string(streamKey), string(historyMetaKey)}, []interface{}{byteMessage, size, int(opts.HistoryTTL.Seconds()), publishChannel, historyMetaTTLSeconds, time.Now().Unix()})
+	dr := s.newDataRequest(script, streamKey, []string{string(streamKey), string(historyMetaKey)}, []any{byteMessage, size, int(opts.HistoryTTL.Seconds()), publishChannel, historyMetaTTLSeconds, time.Now().Unix()})
 	resp := s.getDataResponse(dr)
 	if resp.err != nil {
 		return StreamPosition{}, resp.err
 	}
-	replies, ok := resp.reply.([]interface{})
+	replies, ok := resp.reply.([]any)
 	if !ok || len(replies) != 2 {
 		return StreamPosition{}, errors.New("wrong Redis reply")
 	}
@@ -577,7 +577,7 @@ func (b *RedisBroker) removeHistory(s *RedisShard, ch string) error {
 	} else {
 		key = b.historyListKey(s, ch)
 	}
-	dr := s.newDataRequest("DEL", nil, key, nil, []interface{}{key})
+	dr := s.newDataRequest( nil, key, nil, []any{"DEL", key})
 	resp := s.getDataResponse(dr)
 	return resp.err
 }
@@ -1048,7 +1048,7 @@ func (b *RedisBroker) historyStream(s *RedisShard, ch string, filter HistoryFilt
 
 	historyMetaTTLSeconds := int(b.config.HistoryMetaTTL.Seconds())
 
-	dr := s.newDataRequest("", b.historyStreamScript, historyKey, []string{string(historyKey), string(historyMetaKey)}, []interface{}{includePubs, offset, limit, filter.Reverse, historyMetaTTLSeconds, time.Now().Unix()})
+	dr := s.newDataRequest(b.historyStreamScript, historyKey, []string{string(historyKey), string(historyMetaKey)}, []any{includePubs, offset, limit, filter.Reverse, historyMetaTTLSeconds, time.Now().Unix()})
 	resp := s.getDataResponse(dr)
 	if resp.err != nil {
 		return nil, StreamPosition{}, resp.err
@@ -1075,7 +1075,7 @@ func (b *RedisBroker) historyList(s *RedisShard, ch string, filter HistoryFilter
 
 	historyMetaTTLSeconds := int(b.config.HistoryMetaTTL.Seconds())
 
-	dr := s.newDataRequest("", b.historyListScript, historyKey, []string{string(historyKey), string(historyMetaKey)}, []interface{}{includePubs, rightBound, historyMetaTTLSeconds, time.Now().Unix()})
+	dr := s.newDataRequest(b.historyListScript, historyKey, []string{string(historyKey), string(historyMetaKey)}, []any{includePubs, rightBound, historyMetaTTLSeconds, time.Now().Unix()})
 	resp := s.getDataResponse(dr)
 	if resp.err != nil {
 		return nil, StreamPosition{}, resp.err

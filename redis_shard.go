@@ -32,7 +32,6 @@ const (
 )
 
 const (
-	defaultRedisPoolSize = 128
 	// redisDataBatchLimit is a max amount of data requests in one batch.
 	redisDataBatchLimit = 64
 )
@@ -212,8 +211,8 @@ type dataRequest struct {
 	clusterKey string
 }
 
-func (s *RedisShard) newDataRequest(command string, script *redis.Script, clusterKey channelID, keys []string, args []interface{}) *dataRequest {
-	dr := &dataRequest{command: command, script: script, keys: keys, args: args, resp: make(chan *dataResponse, 1)}
+func (s *RedisShard) newDataRequest(script *redis.Script, clusterKey channelID, keys []string, args []any) *dataRequest {
+	dr := &dataRequest{script: script, keys: keys, args: args, resp: make(chan *dataResponse, 1)}
 	if s.useCluster {
 		dr.setClusterKey(string(clusterKey))
 	}
@@ -349,9 +348,9 @@ func (s *RedisShard) runDataPipeline() error {
 				func(pipe redis.Pipeliner) error {
 					for i := range drs {
 						if drs[i].script != nil {
-							_ = drs[i].script.EvalSha(context.Background(), pipe, drs[i].keys, drs[i].args)
+							_ = drs[i].script.EvalSha(context.Background(), pipe, drs[i].keys, drs[i].args...)
 						} else {
-							_ = pipe.Do(context.Background(), drs[i].command, drs[i].args)
+							_ = pipe.Do(context.Background(), drs[i].args...)
 						}
 					}
 					return nil
@@ -467,16 +466,17 @@ func newRedisClient(s *RedisShard, n *Node, conf RedisShardConfig) (redis.Univer
 		serverAddr := conf.address
 		if !useSentinel {
 			n.Log(NewLogEntry(LogLevelInfo, fmt.Sprintf("Redis: %s/%d, using password: %v", serverAddr, db, usingPassword)))
+			return redis.NewClient(opts.Simple()), nil
 		} else {
 			n.Log(NewLogEntry(LogLevelInfo, fmt.Sprintf("Redis: Sentinel for name: %s, db: %d, using password: %v", conf.SentinelMasterName, db, usingPassword)))
+			return redis.NewFailoverClient(opts.Failover()), nil
 		}
-		client := redis.NewFailoverClient(opts.Failover())
-		return client, nil
 	}
 	// OK, we should work with cluster.
 	n.Log(NewLogEntry(LogLevelInfo, fmt.Sprintf("Redis: cluster addrs: %+v, using password: %v", conf.ClusterAddresses, usingPassword)))
 	cluster := redis.NewClusterClient(opts.Cluster())
 	// Initialize cluster mapping.
+	// TODO
 	cluster.ReloadState(context.Background())
 	return cluster, nil
 }
@@ -491,7 +491,7 @@ func (s *RedisShard) readTimeout() time.Duration {
 
 // runForever keeps another function running indefinitely.
 // The reason this loop is not inside the function itself is
-// so that defer can be used to cleanup nicely.
+// so that defer can be used to clean up nicely.
 func runForever(fn func()) {
 	for {
 		fn()

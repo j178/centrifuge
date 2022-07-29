@@ -145,7 +145,7 @@ func (m *RedisPresenceManager) addPresence(s *RedisShard, ch string, uid string,
 	expireAt := time.Now().Unix() + int64(expire)
 	hashKey := m.presenceHashKey(s, ch)
 	setKey := m.presenceSetKey(s, ch)
-	dr := s.newDataRequest("", m.addPresenceScript, setKey, []string{string(setKey), string(hashKey)}, []interface{}{expire, expireAt, uid, infoBytes})
+	dr := s.newDataRequest(m.addPresenceScript, setKey, []string{string(setKey), string(hashKey)}, []interface{}{expire, expireAt, uid, infoBytes})
 	resp := s.getDataResponse(dr)
 	return resp.err
 }
@@ -158,7 +158,7 @@ func (m *RedisPresenceManager) RemovePresence(ch string, uid string) error {
 func (m *RedisPresenceManager) removePresence(s *RedisShard, ch string, uid string) error {
 	hashKey := m.presenceHashKey(s, ch)
 	setKey := m.presenceSetKey(s, ch)
-	dr := s.newDataRequest("", m.remPresenceScript, setKey, []string{string(setKey), string(hashKey)}, []interface{}{uid})
+	dr := s.newDataRequest(m.remPresenceScript, setKey, []string{string(setKey), string(hashKey)}, []interface{}{uid})
 	resp := s.getDataResponse(dr)
 	return resp.err
 }
@@ -173,7 +173,7 @@ func (m *RedisPresenceManager) presence(s *RedisShard, ch string) (map[string]*C
 	hashKey := m.presenceHashKey(s, ch)
 	setKey := m.presenceSetKey(s, ch)
 	now := int(time.Now().Unix())
-	dr := s.newDataRequest("", m.presenceScript, setKey, []string{string(setKey), string(hashKey)}, []interface{}{now})
+	dr := s.newDataRequest(m.presenceScript, setKey, []string{string(setKey), string(hashKey)}, []interface{}{now})
 	resp := s.getDataResponse(dr)
 	if resp.err != nil {
 		return nil, resp.err
