@@ -409,13 +409,13 @@ func (b *RedisBroker) publish(s *RedisShard, ch string, data []byte, opts Publis
 	if !ok || len(replies) != 2 {
 		return StreamPosition{}, errors.New("wrong Redis reply")
 	}
-	cmd := redis.NewCmdResult(replies[0], nil)
-	offset, err := cmd.Uint64()
+	r := redis.NewCmdResult(replies[0], nil)
+	offset, err := r.Uint64()
 	if err != nil {
 		return StreamPosition{}, errors.New("wrong Redis reply offset")
 	}
-	cmd.SetVal(replies[1])
-	epoch, err := cmd.Text()
+	r.SetVal(replies[1])
+	epoch, err := r.Text()
 	if err != nil {
 		return StreamPosition{}, errors.New("wrong Redis reply epoch")
 	}
@@ -625,6 +625,8 @@ func (b *RedisBroker) runPubSub(s *RedisShard, eventHandler BrokerEventHandler) 
 		b.node.Log(NewLogEntry(LogLevelDebug, "stopping Redis PUB/SUB", map[string]interface{}{"shard": s.string()}))
 	}()
 
+	pubsub := s.client.Subscribe(context.Background())
+
 	done := make(chan struct{})
 	var doneOnce sync.Once
 	closeDoneOnce := func() {
@@ -635,7 +637,6 @@ func (b *RedisBroker) runPubSub(s *RedisShard, eventHandler BrokerEventHandler) 
 	defer closeDoneOnce()
 
 	// Run subscriber goroutine.
-	pubsub := s.client.Subscribe(context.Background())
 	go func() {
 		b.node.Log(NewLogEntry(LogLevelDebug, "starting RedisBroker Subscriber", map[string]interface{}{"shard": s.string()}))
 		defer func() {
@@ -989,8 +990,8 @@ func (s *RedisShard) sendSubscribe(r subRequest) error {
 func extractHistoryResponse(reply interface{}, useStreams bool, includePubs bool) (StreamPosition, []*Publication, error) {
 	results := reply.([]interface{})
 
-	cmd := redis.NewCmdResult(results[0], nil)
-	offset, err := cmd.Uint64()
+	r := redis.NewCmdResult(results[0], nil)
+	offset, err := r.Uint64()
 	if err != nil {
 		if err != redis.Nil {
 			return StreamPosition{}, nil, err
@@ -998,8 +999,8 @@ func extractHistoryResponse(reply interface{}, useStreams bool, includePubs bool
 		offset = 0
 	}
 
-	cmd.SetVal(results[1])
-	epoch, err := cmd.Text()
+	r.SetVal(results[1])
+	epoch, err := r.Text()
 	if err != nil {
 		return StreamPosition{}, nil, err
 	}
@@ -1198,15 +1199,14 @@ func extractPushData(data []byte) ([]byte, pushType, StreamPosition, bool) {
 }
 
 func sliceOfPubsStream(result interface{}, err error) ([]*Publication, error) {
-	r := redis.NewCmdResult(result, err)
-	values, err := r.Slice()
+	values, err := redis.NewCmdResult(result, err).Slice()
 	if err != nil {
 		return nil, err
 	}
 	pubs := make([]*Publication, 0, len(values))
 
 	for i := 0; i < len(values); i++ {
-		r.SetVal(values[i])
+		r := redis.NewCmdResult(values[i], nil)
 		streamElementValues, err := r.Slice()
 		if err != nil {
 			return nil, err
@@ -1216,8 +1216,8 @@ func sliceOfPubsStream(result interface{}, err error) ([]*Publication, error) {
 			return nil, errors.New("malformed reply: number of streamElementValues is not 2")
 		}
 
-		cmd := redis.NewCmdResult(streamElementValues[0], nil)
-		offsetStr, err := cmd.Text()
+		r.SetVal(streamElementValues[0])
+		offsetStr, err := r.Text()
 		if err != nil {
 			return nil, err
 		}
@@ -1230,8 +1230,7 @@ func sliceOfPubsStream(result interface{}, err error) ([]*Publication, error) {
 			return nil, err
 		}
 
-		val := streamElementValues[1]
-		r.SetVal(val)
+		r.SetVal(streamElementValues[1])
 		payloadElementValues, err := r.Slice()
 		if err != nil {
 			return nil, err
@@ -1258,8 +1257,7 @@ func sliceOfPubsStream(result interface{}, err error) ([]*Publication, error) {
 }
 
 func sliceOfPubsList(result interface{}, err error) ([]*Publication, error) {
-	cmd := redis.NewCmdResult(result, err)
-	values, err := cmd.Slice()
+	values, err := redis.NewCmdResult(result, err).Slice()
 	if err != nil {
 		return nil, err
 	}

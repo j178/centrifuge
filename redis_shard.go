@@ -212,7 +212,12 @@ type dataRequest struct {
 }
 
 func (s *RedisShard) newDataRequest(script *redis.Script, clusterKey channelID, keys []string, args []interface{}) *dataRequest {
-	dr := &dataRequest{script: script, keys: keys, args: args, resp: make(chan *dataResponse, 1)}
+	dr := &dataRequest{
+		script: script,
+		keys: keys,
+		args: args,
+		resp: make(chan *dataResponse, 1),
+	}
 	if s.useCluster {
 		dr.setClusterKey(string(clusterKey))
 	}
@@ -299,7 +304,6 @@ func (s *RedisShard) processClusterDataRequest(dr *dataRequest) (interface{}, er
 	}
 
 	if dr.script != nil {
-		// TODO context 使用
 		return dr.script.Run(context.Background(), client, dr.keys, dr.args).Result()
 	}
 	return client.Do(context.Background(), dr.command, dr.args).Result()
