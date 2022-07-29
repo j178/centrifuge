@@ -577,7 +577,7 @@ func (b *RedisBroker) removeHistory(s *RedisShard, ch string) error {
 	} else {
 		key = b.historyListKey(s, ch)
 	}
-	dr := s.newDataRequest( nil, key, nil, []any{"DEL", key})
+	dr := s.newDataRequest(nil, "", nil, []any{"DEL", key})
 	resp := s.getDataResponse(dr)
 	return resp.err
 }
