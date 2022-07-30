@@ -577,7 +577,7 @@ func (b *RedisBroker) removeHistory(s *RedisShard, ch string) error {
 	} else {
 		key = b.historyListKey(s, ch)
 	}
-	dr := s.newDataRequest(nil, "", nil, []interface{}{"DEL", key})
+	dr := s.newDataRequest(nil, "", nil, []interface{}{"DEL", string(key)})
 	resp := s.getDataResponse(dr)
 	return resp.err
 }
@@ -1241,13 +1241,13 @@ func sliceOfPubsStream(result interface{}, err error) ([]*Publication, error) {
 			return nil, errors.New("malformed reply: number of payloadElementValues less than 2")
 		}
 
-		pushData, ok := payloadElementValues[1].([]byte)
+		pushData, ok := payloadElementValues[1].(string)
 		if !ok {
-			return nil, errors.New("error getting []byte push data")
+			return nil, errors.New("error getting string push data")
 		}
 
 		var pub protocol.Publication
-		err = pub.UnmarshalVT(pushData)
+		err = pub.UnmarshalVT([]byte(pushData))
 		if err != nil {
 			return nil, fmt.Errorf("can not unmarshal value to Publication: %v", err)
 		}
@@ -1265,12 +1265,12 @@ func sliceOfPubsList(result interface{}, err error) ([]*Publication, error) {
 	pubs := make([]*Publication, 0, len(values))
 
 	for i := len(values) - 1; i >= 0; i-- {
-		value, okValue := values[i].([]byte)
+		value, okValue := values[i].(string)
 		if !okValue {
-			return nil, errors.New("error getting Message value")
+			return nil, errors.New("error getting string value")
 		}
 
-		pushData, _, sp, ok := extractPushData(value)
+		pushData, _, sp, ok := extractPushData([]byte(value))
 		if !ok {
 			return nil, fmt.Errorf("malformed publication value: %s", value)
 		}
