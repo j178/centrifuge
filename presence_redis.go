@@ -147,6 +147,9 @@ func (m *RedisPresenceManager) addPresence(s *RedisShard, ch string, uid string,
 	setKey := m.presenceSetKey(s, ch)
 	dr := s.newDataRequest(m.addPresenceScript, setKey, []string{string(setKey), string(hashKey)}, []interface{}{expire, expireAt, uid, infoBytes})
 	resp := s.getDataResponse(dr)
+	if resp.err == redis.Nil {
+		return nil
+	}
 	return resp.err
 }
 
@@ -160,6 +163,9 @@ func (m *RedisPresenceManager) removePresence(s *RedisShard, ch string, uid stri
 	setKey := m.presenceSetKey(s, ch)
 	dr := s.newDataRequest(m.remPresenceScript, setKey, []string{string(setKey), string(hashKey)}, []interface{}{uid})
 	resp := s.getDataResponse(dr)
+	if resp.err == redis.Nil {
+		return nil
+	}
 	return resp.err
 }
 
@@ -175,7 +181,7 @@ func (m *RedisPresenceManager) presence(s *RedisShard, ch string) (map[string]*C
 	now := int(time.Now().Unix())
 	dr := s.newDataRequest(m.presenceScript, setKey, []string{string(setKey), string(hashKey)}, []interface{}{now})
 	resp := s.getDataResponse(dr)
-	if resp.err != nil {
+	if resp.err != nil && resp.err != redis.Nil {
 		return nil, resp.err
 	}
 	return mapStringClientInfo(resp.reply, nil)
@@ -195,17 +201,17 @@ func mapStringClientInfo(result interface{}, err error) (map[string]*ClientInfo,
 	}
 	m := make(map[string]*ClientInfo, len(values)/2)
 	for i := 0; i < len(values); i += 2 {
-		key, okKey := values[i].([]byte)
-		value, okValue := values[i+1].([]byte)
+		key, okKey := values[i].(string)
+		value, okValue := values[i+1].(string)
 		if !okKey || !okValue {
 			return nil, errors.New("scanMap key not a bulk string value")
 		}
 		var f protocol.ClientInfo
-		err = f.UnmarshalVT(value)
+		err = f.UnmarshalVT([]byte(value))
 		if err != nil {
 			return nil, errors.New("can not unmarshal value to ClientInfo")
 		}
-		m[string(key)] = infoFromProto(&f)
+		m[key] = infoFromProto(&f)
 	}
 	return m, nil
 }
