@@ -319,7 +319,6 @@ func TestRedisBrokerRecover(t *testing.T) {
 
 func pubSubChannels(t *testing.T, e *RedisBroker) ([]string, error) {
 	client := e.shards[0].client
-	defer func() { require.NoError(t, client.Close()) }()
 	return client.PubSubChannels(context.Background(), e.messagePrefix+"*").Result()
 }
 
