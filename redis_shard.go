@@ -293,7 +293,6 @@ func (s *RedisShard) processClusterDataRequest(dr *dataRequest) (interface{}, er
 	client := s.client
 	if dr.clusterKey != "" {
 		if c, ok := client.(*redis.ClusterClient); ok {
-			// TODO 验证这里的逻辑
 			cc, err := c.MasterForKey(context.Background(), dr.clusterKey)
 			if err != nil {
 				return nil, err
@@ -482,7 +481,6 @@ func newRedisClient(s *RedisShard, n *Node, conf RedisShardConfig) (redis.Univer
 	n.Log(NewLogEntry(LogLevelInfo, fmt.Sprintf("Redis: cluster addrs: %+v, using password: %v", conf.ClusterAddresses, usingPassword)))
 	cluster := redis.NewClusterClient(opts.Cluster())
 	// Initialize cluster mapping.
-	// TODO
 	cluster.ReloadState(context.Background())
 	return cluster, nil
 }
