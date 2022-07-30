@@ -400,7 +400,7 @@ func (b *RedisBroker) publish(s *RedisShard, ch string, data []byte, opts Publis
 		size = opts.HistorySize - 1
 		script = b.addHistoryListScript
 	}
-	dr := s.newDataRequest(script, streamKey, []string{string(streamKey), string(historyMetaKey)}, []interface{}{byteMessage, size, int(opts.HistoryTTL.Seconds()), publishChannel, historyMetaTTLSeconds, time.Now().Unix()})
+	dr := s.newDataRequest(script, streamKey, []string{string(streamKey), string(historyMetaKey)}, []interface{}{byteMessage, size, int(opts.HistoryTTL.Seconds()), string(publishChannel), historyMetaTTLSeconds, time.Now().Unix()})
 	resp := s.getDataResponse(dr)
 	if resp.err != nil {
 		return StreamPosition{}, resp.err
@@ -994,7 +994,7 @@ func extractHistoryResponse(reply interface{}, useStreams bool, includePubs bool
 	r := redis.NewCmdResult(results[0], nil)
 	offset, err := r.Uint64()
 	if err != nil {
-		if err != redis.Nil {
+		if r.Val() != nil {
 			return StreamPosition{}, nil, err
 		}
 		offset = 0

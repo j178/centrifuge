@@ -203,7 +203,6 @@ type dataResponse struct {
 }
 
 type dataRequest struct {
-	command    string
 	script     *redis.Script
 	keys       []string
 	args       []interface{}
@@ -306,7 +305,7 @@ func (s *RedisShard) processClusterDataRequest(dr *dataRequest) (interface{}, er
 	if dr.script != nil {
 		return dr.script.Run(context.Background(), client, dr.keys, dr.args).Result()
 	}
-	return client.Do(context.Background(), dr.command, dr.args).Result()
+	return client.Do(context.Background(), dr.args...).Result()
 }
 
 func (s *RedisShard) runDataPipeline() error {
