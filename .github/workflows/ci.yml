@@ -40,6 +40,8 @@ jobs:
         run: docker compose up -d --wait
 
       - name: Test
+        env:
+          SKIP_LONG_BENCH: true
         run: go test -v -race -tags integration -bench=. -coverprofile=coverage.out $(go list ./... | grep -v /_examples/)
 
       - name: Upload code coverage to codecov
