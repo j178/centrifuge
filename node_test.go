@@ -262,9 +262,9 @@ func TestNodeRegistry(t *testing.T) {
 	registry := newNodeRegistry("node1")
 	nodeInfo1 := controlpb.Node{Uid: "node1"}
 	nodeInfo2 := controlpb.Node{Uid: "node2"}
-	registry.add(&nodeInfo1)
-	registry.add(&nodeInfo1) // Make sure update works.
-	registry.add(&nodeInfo2)
+	require.True(t, registry.add(&nodeInfo1))
+	require.False(t, registry.add(&nodeInfo1)) // Make sure update works.
+	require.True(t, registry.add(&nodeInfo2))
 	require.Equal(t, 2, len(registry.list()))
 	require.Equal(t, 2, registry.size())
 	info, ok := registry.get("node1")
