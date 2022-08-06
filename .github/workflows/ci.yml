@@ -35,6 +35,8 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Start redis
+        env:
+          REDIS_VERSION: ${{ matrix.redis-version }}
         run: docker compose up -d
 
       - name: Test
