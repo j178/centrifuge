@@ -46,7 +46,7 @@ jobs:
         run: docker run -d -p 26379:26379 joshula/redis-sentinel:latest --sentinel announce-ip 1.2.3.4 --sentinel announce-port 26379
 
       - name: Test
-        run: go test -v -race -tags integration -coverprofile=coverage.out $(go list ./... | grep -v /_examples/)
+        run: go test -v -race -tags integration -bench=. -coverprofile=coverage.out $(go list ./... | grep -v /_examples/)
 
       - name: Upload code coverage to codecov
         if: matrix.go-version == '1.18'
