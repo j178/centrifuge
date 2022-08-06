@@ -375,7 +375,7 @@ func newRealConnJSON(b testing.TB, channel string, url string) *websocket.Conn {
 		Params: params,
 	}
 	cmdBytes, _ := json.Marshal(cmd)
-	_ = conn.WriteMessage(websocket.TextMessage, cmdBytes)
+	require.NoError(b, conn.WriteMessage(websocket.TextMessage, cmdBytes))
 	_, _, err := conn.ReadMessage()
 	require.NoError(b, err)
 	return conn
@@ -401,7 +401,7 @@ func newRealConnProtobuf(b testing.TB, channel string, url string) *websocket.Co
 	buf.Write(bs[:n])
 	buf.Write(cmdBytes)
 
-	_ = conn.WriteMessage(websocket.BinaryMessage, buf.Bytes())
+	require.NoError(b, conn.WriteMessage(websocket.BinaryMessage, buf.Bytes()))
 	_, _, err := conn.ReadMessage()
 	require.NoError(b, err)
 	return conn
@@ -687,8 +687,9 @@ func newRealConnJSONConnect(b testing.TB, url string) *websocket.Conn {
 	}
 	cmdBytes, _ := json.Marshal(cmd)
 
-	_ = conn.WriteMessage(websocket.TextMessage, cmdBytes)
+	require.NoError(b, conn.WriteMessage(websocket.TextMessage, cmdBytes))
 	_, _, err = conn.ReadMessage()
+	// websocket: close 3502: stale
 	require.NoError(b, err)
 	return conn
 }
@@ -714,8 +715,9 @@ func newRealConnProtobufConnect(b testing.TB, url string) *websocket.Conn {
 	buf.Write(bs[:n])
 	buf.Write(cmdBytes)
 
-	_ = conn.WriteMessage(websocket.BinaryMessage, buf.Bytes())
+	require.NoError(b, conn.WriteMessage(websocket.BinaryMessage, buf.Bytes()))
 	_, _, err = conn.ReadMessage()
+	// websocket: close 3502: stale
 	require.NoError(b, err)
 	return conn
 }
