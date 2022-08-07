@@ -689,7 +689,6 @@ func newRealConnJSONConnect(b testing.TB, url string) *websocket.Conn {
 
 	require.NoError(b, conn.WriteMessage(websocket.TextMessage, cmdBytes))
 	_, _, err = conn.ReadMessage()
-	// websocket: close 3502: stale
 	require.NoError(b, err)
 	return conn
 }
@@ -717,7 +716,6 @@ func newRealConnProtobufConnect(b testing.TB, url string) *websocket.Conn {
 
 	require.NoError(b, conn.WriteMessage(websocket.BinaryMessage, buf.Bytes()))
 	_, _, err = conn.ReadMessage()
-	// websocket: close 3502: stale
 	require.NoError(b, err)
 	return conn
 }
