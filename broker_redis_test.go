@@ -962,7 +962,7 @@ var benchSurveyTests = func() (tests []benchSurveyTest) {
 func BenchmarkRedisSurvey(b *testing.B) {
 	for _, tt := range benchSurveyTests {
 		b.Run(tt.Name, func(b *testing.B) {
-			if os.Getenv("SKIP_LONG_BENCH") != "" && tt.NumOtherNodes > 10 {
+			if os.Getenv("CENTRIFUGE_SKIP_EXHAUSTIVE_BENCHMARKS") != "" && tt.NumOtherNodes > 10 {
 				b.Skip("skip long time benchmark in CI")
 			}
 			prefix := getUniquePrefix()
