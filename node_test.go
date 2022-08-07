@@ -639,8 +639,8 @@ func BenchmarkBroadcastMemory(b *testing.B) {
 
 	for _, bm := range benchmarks {
 		b.Run(fmt.Sprintf("%s_%d_sub", bm.name, bm.numSubscribers), func(b *testing.B) {
-			if os.Getenv("CENTRIFUGE_SKIP_EXHAUSTIVE_BENCHMARKS") != "" && bm.numSubscribers > 1000 {
-				b.Skip("skip long time benchmark in CI")
+			if os.Getenv("CENTRIFUGE_SKIP_EXPENSIVE_BENCHMARKS") != "" && bm.numSubscribers > 1000 {
+				b.Skip("skip expensive benchmark in CI")
 			}
 			n := defaultTestNodeBenchmark(b)
 			payload := []byte(`{"input": "test"}`)
