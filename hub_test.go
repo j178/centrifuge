@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -782,8 +781,8 @@ func BenchmarkHub_MassiveBroadcast(b *testing.B) {
 	for _, tt := range broadcastBenches {
 		numSubscribers := tt.NumSubscribers
 		b.Run(fmt.Sprintf("%d", numSubscribers), func(b *testing.B) {
-			if os.Getenv("CENTRIFUGE_SKIP_EXPENSIVE_BENCHMARKS") != "" && numSubscribers > 1000 {
-				b.Skip("skip expensive benchmark in CI")
+			if testing.Short() && numSubscribers > 1000 {
+				b.Skip("skipping in short mode")
 			}
 			b.ReportAllocs()
 			n := defaultTestNodeBenchmark(b)

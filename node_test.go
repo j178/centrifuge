@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -639,8 +638,8 @@ func BenchmarkBroadcastMemory(b *testing.B) {
 
 	for _, bm := range benchmarks {
 		b.Run(fmt.Sprintf("%s_%d_sub", bm.name, bm.numSubscribers), func(b *testing.B) {
-			if os.Getenv("CENTRIFUGE_SKIP_EXPENSIVE_BENCHMARKS") != "" && bm.numSubscribers > 1000 {
-				b.Skip("skip expensive benchmark in CI")
+			if testing.Short() && bm.numSubscribers > 1000 {
+				b.Skip("skipping in short mode")
 			}
 			n := defaultTestNodeBenchmark(b)
 			payload := []byte(`{"input": "test"}`)
